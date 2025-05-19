@@ -1,11 +1,15 @@
-﻿using CommunityToolkit.Maui.Markup;
-
-namespace MauiMVUTest;
+﻿namespace MauiMVUTest;
 public static class LabelExtensions
 {
-	public static Label BindText(this Label label, string propertyName)
+	public static Label Text(this Label label, string text)
 	{
-		label.Bind(Label.TextProperty, propertyName);
+		label.Text = text;
+		return label;
+	}
+
+	public static Label TextColor(this Label label, Color color)
+	{
+		label.TextColor = color;
 		return label;
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using AppFramework.Mvvm;
+using CommunityToolkit.Maui.Markup;
 namespace MauiMVUTest;
 
 public partial class MainPage : ContentPage
@@ -17,9 +18,14 @@ public partial class MainPage : ContentPage
 				Children =
 				{
 					new Label() { }
-						.BindText(nameof(MyText)),
+						.Bind(Label.TextProperty, (MainPage ctx) => ctx.MyText),
 					new Button() { }
+						.BorderColor(Colors.Green)
+						.BorderWidth(1.0)
+						.BackgroundColor(Colors.White)
+						.CornerRadius(5)
 						.Text("Update Text")
+						.TextColor(Colors.Green)
 						.Command(() => { MyText = $"Clicked {++ClickCount} times"; })
 				}
 			};
