@@ -12,8 +12,6 @@ public class BindablePropertyGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        //System.Diagnostics.Debugger.Launch();
-
         var properties = context.SyntaxProvider
             .CreateSyntaxProvider(
                 predicate: static (node, _) => node is PropertyDeclarationSyntax prop && prop.AttributeLists.Count > 0,

@@ -10,75 +10,66 @@ namespace AppFramework.Mvvm;
 [Generator]
 public class ObservablePropertyGenerator : IIncrementalGenerator
 {
-	public void Initialize(IncrementalGeneratorInitializationContext context)
-	{
-		//System.Diagnostics.Debugger.Launch();
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var properties = context.SyntaxProvider
+            .CreateSyntaxProvider(
+                predicate: static (node, _) => node is PropertyDeclarationSyntax prop && prop.AttributeLists.Count > 0,
+                transform: static (ctx, _) =>
+                {
+                    var propertySyntax = (PropertyDeclarationSyntax)ctx.Node;
+                    var propertySymbol = ctx.SemanticModel.GetDeclaredSymbol(propertySyntax) as IPropertySymbol;
+                    if (propertySymbol is null)
+                    {
+                        return null;
+                    }
 
-		var properties = context.SyntaxProvider
-			.CreateSyntaxProvider(
-				predicate: static (node, _) => node is PropertyDeclarationSyntax prop && prop.AttributeLists.Count > 0,
-				transform: static (ctx, _) =>
-				{
-					var propertySyntax = (PropertyDeclarationSyntax)ctx.Node;
-					var propertySymbol = ctx.SemanticModel.GetDeclaredSymbol(propertySyntax) as IPropertySymbol;
-					if (propertySymbol is null)
-					{
-						return null;
-					}
+                    bool hasAttribute = false;
+                    foreach (var attr in propertySymbol.GetAttributes())
+                    {
+                        if (attr.AttributeClass?.Name == "AppFramework.Mvvm.ObservablePropertyAttribute" ||
+                            attr.AttributeClass?.ToDisplayString() == "AppFramework.Mvvm.ObservablePropertyAttribute")
+                        {
+                            hasAttribute = true;
+                            break;
+                        }
+                    }
 
-					/*
-                    var hasAttribute = propertySymbol.GetAttributes().Any(attr =>
-                       attr.AttributeClass?.Name == "AppFramework.Mvvm.ObservablePropertyAttribute" ||
-                       attr.AttributeClass?.ToDisplayString() == "AppFramework.Mvvm.ObservablePropertyAttribute");
-                    */
-					bool hasAttribute = false;
-					foreach (var attr in propertySymbol.GetAttributes())
-					{
-						if (attr.AttributeClass?.Name == "AppFramework.Mvvm.ObservablePropertyAttribute" ||
-							attr.AttributeClass?.ToDisplayString() == "AppFramework.Mvvm.ObservablePropertyAttribute")
-						{
-							hasAttribute = true;
-							break;
-						}
-					}
+                    return hasAttribute ? propertySymbol : null;
+                })
+            .Where(static symbol => symbol is not null);
 
-					return hasAttribute ? propertySymbol : null;
-				})
-			.Where(static symbol => symbol is not null);
+        context.RegisterSourceOutput(properties, (spc, propertySymbol) =>
+        {
+            var propertyAttributes = propertySymbol!.GetAttributes();
+            var classSymbol = propertySymbol!.ContainingType;
+            var className = classSymbol.Name;
+            var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
+            var propertyName = propertySymbol.Name;
+            var typeName = propertySymbol.Type.ToDisplayString();
+            var bareTypeName = typeName.Replace("?", "");
+            PropertyDeclarationSyntax propertySyntax = (propertySymbol.DeclaringSyntaxReferences[0].GetSyntax() as PropertyDeclarationSyntax)!;
+            var initializer = propertySyntax.Initializer;
+            var initializerWithEquals = (initializer is not null) ? $" = {initializer.Value.ToString()}" : string.Empty;
 
-		//var items = properties.Select(static (item, _) => item);
+            string getModifiers = string.Empty;
+            string setModifiers = string.Empty;
+            if (propertySyntax.AccessorList is not null)
+            {
+                foreach (var accessor in propertySyntax.AccessorList.Accessors)
+                {
+                    if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
+                    {
+                        getModifiers = accessor.Modifiers.ToString();
+                    }
+                    else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
+                    {
+                        setModifiers = accessor.Modifiers.ToString();
+                    }
+                }
+            }
 
-		context.RegisterSourceOutput(properties, (spc, propertySymbol) =>
-		{
-			var propertyAttributes = propertySymbol!.GetAttributes();
-			var classSymbol = propertySymbol!.ContainingType;
-			var className = classSymbol.Name;
-			var namespaceName = classSymbol.ContainingNamespace.ToDisplayString();
-			var propertyName = propertySymbol.Name;
-			var typeName = propertySymbol.Type.ToDisplayString();
-			var bareTypeName = typeName.Replace("?", "");
-			PropertyDeclarationSyntax propertySyntax = (propertySymbol.DeclaringSyntaxReferences[0].GetSyntax() as PropertyDeclarationSyntax)!;
-			var initializer = propertySyntax.Initializer;
-			var initializerWithEquals = (initializer is not null) ? $" = {initializer.Value.ToString()}" : string.Empty;
-
-			string getModifiers = string.Empty;
-			string setModifiers = string.Empty;
-			if (propertySyntax.AccessorList is not null)
-			{
-				foreach (var accessor in propertySyntax.AccessorList.Accessors)
-				{
-					if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
-					{
-						getModifiers = accessor.Modifiers.ToString();
-					}
-					else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
-					{
-						setModifiers = accessor.Modifiers.ToString();
-					}
-				}
-			}
-
-			var source = $@"
+            var source = $@"
 using System.ComponentModel;
 
 // <auto-generated/>
@@ -134,7 +125,7 @@ partial class {className}
     partial void On{propertyName}Changed({typeName} oldValue, {typeName} newValue);
 }}
 ";
-			spc.AddSource($"{className}_{propertyName}_ObservableProperty.g.cs", SourceText.From(source, Encoding.UTF8));
-		});
-	}
+            spc.AddSource($"{className}_{propertyName}_ObservableProperty.g.cs", SourceText.From(source, Encoding.UTF8));
+        });
+    }
 }
