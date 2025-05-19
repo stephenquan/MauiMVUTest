@@ -1,7 +1,8 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
-using System.Text;
 
 
 namespace AppFramework.Mvvm;
@@ -52,6 +53,23 @@ public class BindablePropertyGenerator : IIncrementalGenerator
             var initializer = propertySyntax.Initializer;
             string initializerWithComma = (initializer is not null) ? $", {initializer.Value.ToString()}" : string.Empty;
 
+            string getModifiers = string.Empty;
+            string setModifiers = string.Empty;
+            if (propertySyntax.AccessorList is not null)
+            {
+                foreach (var accessor in propertySyntax.AccessorList.Accessors)
+                {
+                    if (accessor.Kind() == SyntaxKind.GetAccessorDeclaration)
+                    {
+                        getModifiers = accessor.Modifiers.ToString();
+                    }
+                    else if (accessor.Kind() == SyntaxKind.SetAccessorDeclaration)
+                    {
+                        setModifiers = accessor.Modifiers.ToString();
+                    }
+                }
+            }
+
             var source = $@"
 using System.ComponentModel;
 
@@ -84,8 +102,8 @@ partial class {className}
     /// <inheritdoc />
     public partial {typeName} {propertyName}
     {{
-        get => ({typeName})GetValue({propertyName}Property);
-        set => SetValue({propertyName}Property, field = value);
+        {getModifiers} get => ({typeName})GetValue({propertyName}Property);
+        {setModifiers} set => SetValue({propertyName}Property, field = value);
     }}
 
     /// <summary>Executes the logic for when <see cref=""{propertyName}""/> is changing.</summary>
