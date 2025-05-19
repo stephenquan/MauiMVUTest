@@ -20,10 +20,7 @@ public partial class MainPage : ContentPage
 						.BindText(nameof(MyText)),
 					new Button() { }
 						.Text("Update Text")
-						.Command(() => {
-							ClickCount++;
-							MyText = $"Clicked {ClickCount} times";
-						})
+						.Command(() => { MyText = $"Clicked {++ClickCount} times"; })
 				}
 			};
 	}
