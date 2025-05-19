@@ -2,6 +2,8 @@
 using CommunityToolkit.Maui.Markup;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace MauiMVUTest;
 
 public static class MauiProgram

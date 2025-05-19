@@ -1,10 +1,11 @@
-﻿namespace MauiMVUTest
+﻿namespace MauiMVUTest;
+
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
+public partial class AppShell : Shell
 {
-    public partial class AppShell : Shell
+    public AppShell()
     {
-        public AppShell()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
     }
 }

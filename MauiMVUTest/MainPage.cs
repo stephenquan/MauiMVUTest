@@ -2,11 +2,17 @@
 using CommunityToolkit.Maui.Markup;
 namespace MauiMVUTest;
 
+/// <summary>
+/// This is the main page of the application.
+/// </summary>
 public partial class MainPage : ContentPage
 {
     [BindableProperty] public partial int ClickCount { get; private set; } = 0;
     [BindableProperty] public partial string MyText { get; private set; } = "Hello, World!";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MainPage"/> class.
+    /// </summary>
     public MainPage()
     {
         BindingContext = this;
