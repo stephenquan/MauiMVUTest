@@ -48,8 +48,12 @@ public class BindablePropertyGenerator : IIncrementalGenerator
             var typeName = propertySymbol.Type.ToDisplayString();
             var bareTypeName = typeName.Replace("?", "");
             PropertyDeclarationSyntax propertySyntax = (propertySymbol.DeclaringSyntaxReferences[0].GetSyntax() as PropertyDeclarationSyntax)!;
-            var initializer = propertySyntax.Initializer;
-            string initializerWithComma = (initializer is not null) ? $", {initializer.Value.ToString()}" : string.Empty;
+
+            var propertyModifiers = propertySyntax.Modifiers
+                .Where(m => !m.IsKind(SyntaxKind.PartialKeyword))
+                .Select(m => m.Text)
+                .ToList();
+            string access = propertyModifiers.Count > 0 ? string.Join(" ", propertyModifiers) : "public";
 
             string getModifiers = string.Empty;
             string setModifiers = string.Empty;
@@ -83,8 +87,8 @@ partial class {className}
     /// <summary>
     /// Bindable property for <see cref=""{propertyName}""/>.
     /// </summary>
-    public static readonly BindableProperty {propertyName}Property
-        = BindableProperty.Create(nameof({propertyName}), typeof({bareTypeName}), typeof({className}){initializerWithComma},
+    {access} static readonly BindableProperty {propertyName}Property
+        = BindableProperty.Create(nameof({propertyName}), typeof({bareTypeName}), typeof({className}),
             propertyChanging: (b,o,n) =>
             {{
                 (({className})b).On{propertyName}Changing(({typeName})n);
@@ -94,13 +98,25 @@ partial class {className}
             {{
                 (({className})b).On{propertyName}Changed(({typeName})n);
                 (({className})b).On{propertyName}Changed(({typeName})o, ({typeName})n);
-            }}
+            }},
+            defaultValueCreator: (b) => (({className})b).On{propertyName}CreateDefaultValue()
         );
 
-    /// <inheritdoc />
-    public partial {typeName} {propertyName}
+    bool Is{propertyName}CreatingDefaultValue {{ get; set; }} = false;
+
+    /// <summary>Creates the default value for <see cref=""{propertyName}""/>.</summary>
+    {access} object On{propertyName}CreateDefaultValue()
     {{
-        {getModifiers} get => ({typeName})GetValue({propertyName}Property);
+        Is{propertyName}CreatingDefaultValue = true;
+        object result = {propertyName};
+        Is{propertyName}CreatingDefaultValue = false;
+        return result;
+    }}
+
+    /// <inheritdoc />
+    {access} partial {typeName} {propertyName}
+    {{
+        {getModifiers} get => Is{propertyName}CreatingDefaultValue ? field : ({typeName})GetValue({propertyName}Property);
         {setModifiers} set => SetValue({propertyName}Property, field = value);
     }}
 
