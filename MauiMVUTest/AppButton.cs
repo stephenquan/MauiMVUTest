@@ -1,5 +1,5 @@
-﻿using AppFramework.Mvvm;
-using CommunityToolkit.Maui.Markup;
+﻿using CommunityToolkit.Maui.Markup;
+using SQuan.Helpers.Maui.Mvvm;
 
 namespace MauiMVUTest;
 

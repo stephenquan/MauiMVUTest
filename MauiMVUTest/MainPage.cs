@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
-using AppFramework.Mvvm;
 using CommunityToolkit.Maui.Markup;
 using MauiMVUTest.Resources.Strings;
+using SQuan.Helpers.Maui.Mvvm;
 
 namespace MauiMVUTest;
 
